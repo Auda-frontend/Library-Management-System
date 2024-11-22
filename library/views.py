@@ -1,12 +1,18 @@
+import json
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
-from . import forms,models
+from librarymanagement.settings import EMAIL_HOST_USER
+from . import forms, models
 from django.http import HttpResponseRedirect
 from django.contrib.auth.models import Group
 from django.contrib import auth
-from django.contrib.auth.decorators import login_required,user_passes_test
-from datetime import datetime,timedelta,date
+from django.contrib.auth.decorators import login_required, user_passes_test
+from datetime import datetime, timedelta, date
 from django.core.mail import send_mail
+from django.db.models import Count
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
 #from librarymanagement.settings import EMAIL_HOST_USER
 
 
@@ -196,6 +202,45 @@ def contactus_view(request):
             email = sub.cleaned_data['Email']
             name=sub.cleaned_data['Name']
             message = sub.cleaned_data['Message']
-            send_mail(str(name)+' || '+str(email),message, EMAIL_HOST_USER, ['wapka1503@gmail.com'], fail_silently = False)
+            send_mail(str(name)+' || '+str(email),message, EMAIL_HOST_USER, ['betaauda@gmail.com'], fail_silently = False)
             return render(request, 'library/contactussuccess.html')
     return render(request, 'library/contactus.html', {'form':sub})
+
+def analytics_dashboard(request):
+    try:
+        # Total number of books
+        total_books = models.Book.objects.count()
+
+        # Total number of students (user count from StudentExtra)
+        total_students = models.StudentExtra.objects.count()
+
+        # Total number of books issued
+        total_books_issued = models.IssuedBook.objects.count()
+
+        # Books not yet returned (books with expiry date in the future)
+        books_not_returned = models.IssuedBook.objects.filter(expirydate__gt=datetime.today()).count()
+
+        # Total overdue books (books with expiry date passed)
+        overdue_books = models.IssuedBook.objects.filter(expirydate__lt=datetime.today()).count()
+
+        # Get the statistics in a dictionary for passing to the template
+        context = {
+            'total_books': total_books,
+            'total_students': total_students,
+            'total_books_issued': total_books_issued,
+            'books_not_returned': books_not_returned,
+            'overdue_books': overdue_books,
+            'chart_data': json.dumps({
+                'labels': ['Total Books', 'Total Students', 'Books Issued', 'Books Not Returned', 'Overdue Books'],
+                'data': [total_books, total_students, total_books_issued, books_not_returned, overdue_books]
+            }),
+        }
+        return render(request, 'library/statistics.html', context)
+
+    except Exception as e:
+        # Handle any errors and provide fallback data
+        print(f"Error in statistics view: {str(e)}")
+        context = {
+            'error_message': 'Unable to load statistics at this time.'
+        }
+        return render(request, 'library/statistics.html', context)

@@ -47,5 +47,6 @@ urlpatterns = [
 
     path('aboutus', views.aboutus_view),
     path('contactus', views.contactus_view),
+    path('data-analytics', views.analytics_dashboard, name='analytics_dashboard'),
 
 ]

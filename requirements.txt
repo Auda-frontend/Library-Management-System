@@ -1,6 +1,10 @@
+# Asynchronous Server Gateway Interface Reference Implementation
 asgiref==3.2.7
 Django==3.0.5
+# allows you to customize form fields' rendering in templates.
 django-widget-tweaks==1.4.8
+# for timezones definition
 pytz==2020.1
+# formatting and analyzing SQL queries
 sqlparse==0.3.1
 
